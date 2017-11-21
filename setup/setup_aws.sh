@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xefu -o pipefail
+set -efu -o pipefail
 
 if [ $(pwd | grep setup | wc -l) -eq 1 ]
 then

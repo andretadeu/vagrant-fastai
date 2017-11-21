@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -efu -o pipefail
+set -efu -o pipefail
 
 # Reset
 export Color_Off='\033[0m'       # Text Reset
