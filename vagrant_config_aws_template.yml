@@ -1,0 +1,10 @@
+# AWS
+access_key_id: "" # AWS Access Key ID
+secret_access_key: "" # AWS Secret Access Key
+ssh_private_key_path: "" # Location of your AWS Key pair file
+aws_keypair_name: "" # The name of your key pair registered in your region
+aws_security_groups_ids: [""] # The IDs of your security groups in the region
+aws_subnet_id: "" # The subnet in the region that you must use
+aws_ami: "" # AMI ID
+aws_instance_type: "" # Instance Type
+aws_region: "" # AWS region
