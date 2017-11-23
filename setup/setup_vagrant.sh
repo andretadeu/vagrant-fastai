@@ -8,6 +8,7 @@ source $(pwd)/setup/colors.sh
 install_vagrant_plugins() {
   vagrant plugin install vagrant-aws
   if [ $? -ne 0 ]
+  then
     printf "${Red}Vagrant not installed! Please install Vagrant to proceed with the setup\n"
     exit 4
   fi
