@@ -8,6 +8,7 @@ then
 fi
 
 source $(pwd)/setup/colors.sh
+source $(pwd)/setup/strings.sh
 
 # Setup the whole AWS environment.
 # Since I don't want a bunch of AWS variables lying around in my environment,
@@ -52,7 +53,7 @@ __setup_aws() {
 
   # Setup AWS VPC
   local vpcId="$(aws ec2 describe-vpcs --filters Name=tag:Name,Values="$name" --query "Vpcs[0].VpcId")"
-  if [ "${vpcId}" == "None" ]
+  if [ "${vpcId}" == "None" ] || [ "${vpcId}" == "null" ]
   then
     printf "${BWhite}Fast.ai virtual private cloud does not exist. Creating one.\n"
     local vpcId=$(aws ec2 create-vpc --cidr-block 10.0.0.0/28 --query 'Vpc.VpcId' --output text)
@@ -65,7 +66,7 @@ __setup_aws() {
 
   # Setup AWS Internet Gateway
   local internetGatewayId="$(aws ec2 describe-internet-gateways --filter Name=tag:Name,Values="$name"-gateway --query "InternetGateways[0].InternetGatewayId")"
-  if [ "${internetGatewayId}" == "None" ]
+  if [ "${internetGatewayId}" == "None" ] || [ "${internetGatewayId}" == "null" ]
   then
     printf "${BWhite}Fast.ai Internet Gateway does not exist. Creating one.\n"
     local internetGatewayId=$(aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text)
@@ -77,7 +78,7 @@ __setup_aws() {
 
   # Setup AWS subnet
   local subnetId="$(aws ec2 describe-subnets --filter Name=tag:Name,Values="$name"-subnet --query "Subnets[0].SubnetId")"
-  if [ "${subnetId}" == "None" ]
+  if [ "${subnetId}" == "None" ] || [ "${subnetId}" == "null" ]
   then
     printf "${BWhite}Fast.ai subnet does not exist. Creating one.\n"
     local subnetId=$(aws ec2 create-subnet --vpc-id $vpcId --cidr-block 10.0.0.0/28 --query 'Subnet.SubnetId' --output text)
@@ -88,7 +89,7 @@ __setup_aws() {
 
   # Setup AWS route table
   local routeTableId="$(aws ec2 describe-route-tables --filter Name=tag:Name,Values="$name"-route-table --query "RouteTables[0].RouteTableId")"
-  if [ "${routeTableId}" == "None" ]
+  if [ "${routeTableId}" == "None" ] || [ "${routeTableId}" == "null" ]
   then
     printf "${BWhite}Fast.ai route table does not exist. Creating one.\n"
     local routeTableId=$(aws ec2 create-route-table --vpc-id $vpcId --query 'RouteTable.RouteTableId' --output text)
@@ -101,7 +102,7 @@ __setup_aws() {
 
   # Setup AWS security group
   local securityGroupId="$(aws ec2 describe-security-groups --filters Name=vpc-id,Values="$vpcId" Name=group-name,Values="$name"-security-group --query "SecurityGroups[0].GroupId")"
-  if [ "${securityGroupId}" == "None" ]
+  if [ "${securityGroupId}" == "None" ] || [ "${securityGroupId}" == "null" ]
   then
     printf "${BWhite}Fast.ai security group does not exist. Creating one.\n"
     local securityGroupId=$(aws ec2 create-security-group --group-name $name-security-group --description "SG for fast.ai machine" --vpc-id $vpcId --query 'GroupId' --output text)
@@ -143,7 +144,13 @@ __destroy_aws_resources() {
   local routeTableId="$(aws ec2 describe-route-tables --filter Name=tag:Name,Values="$name"-route-table --query "RouteTables[0].RouteTableId")"
   local securityGroupId="$(aws ec2 describe-security-groups --filters Name=vpc-id,Values="$vpcId" Name=group-name,Values="$name"-security-group --query "SecurityGroups[0].GroupId")"
 
-  if [ "${securityGroupId}" != "None" ]
+  vpcId="$(__remove_trailing_double_quotes "${vpcId}")"
+  internetGatewayId="$(__remove_trailing_double_quotes "${internetGatewayId}")"
+  subnetId="$(__remove_trailing_double_quotes "${subnetId}")"
+  routeTableId="$(__remove_trailing_double_quotes "${routeTableId}")"
+  securityGroupId="$(__remove_trailing_double_quotes "${securityGroupId}")"
+
+  if [ "${securityGroupId}" != "None" ] && [ "${securityGroupId}" != "null" ]
   then
     printf "${BWhite} Removing AWS security group.\n"
     aws ec2 delete-security-group --group-id "${securityGroupId}"
@@ -151,7 +158,7 @@ __destroy_aws_resources() {
     printf "${BWhite} AWS security group already removed. Skipping.\n"
   fi
 
-  if [ "${routeTableId}" != "None" ]
+  if [ "${routeTableId}" != "None" ] && [ "${routeTableId}" != "null" ]
   then
     printf "${BWhite} Removing AWS route table.\n"
     local routeTableAssoc=$(aws ec2 associate-route-table --route-table-id $routeTableId --subnet-id $subnetId --output text)
@@ -161,7 +168,7 @@ __destroy_aws_resources() {
     printf "${BWhite} AWS route table already removed. Skipping.\n"
   fi
 
-  if [ "${internetGatewayId}" != "None" ]
+  if [ "${internetGatewayId}" != "None" ] && [ "${internetGatewayId}" != "null" ]
   then
     printf "${BWhite} Removing AWS Internet gateway.\n"
     aws ec2 detach-internet-gateway --internet-gateway-id $internetGatewayId --vpc-id $vpcId
@@ -170,7 +177,7 @@ __destroy_aws_resources() {
     printf "${BWhite} AWS Internet gateway already removed. Skipping.\n"
   fi
 
-  if [ "${subnetId}" != "None" ]
+  if [ "${subnetId}" != "None" ] && [ "${subnetId}" != "null" ]
   then
     printf "${BWhite} Removing AWS subnet.\n"
     aws ec2 delete-subnet --subnet-id $subnetId
@@ -178,7 +185,7 @@ __destroy_aws_resources() {
     printf "${BWhite} AWS subnet already removed. Skipping.\n"
   fi
 
-  if [ "${vpcId}" != "None" ]
+  if [ "${vpcId}" != "None" ] && [ "${vpcId}" != "null" ]
   then
     printf "${BWhite} Removing AWS VPC.\n"
     aws ec2 delete-vpc --vpc-id $vpcId
